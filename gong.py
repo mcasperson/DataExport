@@ -55,7 +55,9 @@ def fetch_all_calls(headers):
     """Paginate every page of the extensive endpoint via the returned cursor."""
     calls = []
     cursor = None
+    page = 1
     while True:
+        print(f"Fetching calls page {page}...")
         body = dict(EXTENSIVE_BODY)
         if cursor:
             body["cursor"] = cursor
@@ -64,6 +66,7 @@ def fetch_all_calls(headers):
         cursor = (response.get("records") or {}).get("cursor")
         if not cursor:
             break
+        page += 1
     return calls
 
 
@@ -92,6 +95,7 @@ def matches_account(call):
 
 def fetch_transcript(call_id, headers):
     """Fetch the transcript response for a single call id."""
+    print(f"Fetching transcript for call {call_id}...")
     body = {"filter": {"callIds": [call_id]}}
     return post_json(TRANSCRIPT_URL, body, headers)
 
