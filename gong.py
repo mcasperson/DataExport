@@ -103,22 +103,15 @@ def fetch_transcript(call_id, headers):
 
 def extract_sentence_texts(response):
     """Pull transcript.sentences[].text out of a transcript response."""
-    payloads = []
-    if isinstance(response, list):
-        payloads = response
-    else:
-        record = response.get("transcript")
-        if record is None:
-            record = response.get("results") or response
-        payloads = record if isinstance(record, list) else [record]
     texts = []
-    for payload in payloads:
+    for payload in response.get('callTranscripts') or []:
         if not isinstance(payload, dict):
             continue
-        for sentence in payload.get("sentences") or []:
-            text = sentence.get("text")
-            if text:
-                texts.append(text)
+        for transcript in payload.get("transcript") or []:
+            for sentence in transcript.get("sentences") or []:
+                text = sentence.get("text")
+                if text:
+                    texts.append(text)
     return texts
 
 
