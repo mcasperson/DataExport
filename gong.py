@@ -101,17 +101,20 @@ def fetch_transcript(call_id, headers):
     return post_json(TRANSCRIPT_URL, body, headers)
 
 
-def extract_sentence_texts(response):
+def extract_sentence_texts(response, call):
     """Pull transcript.sentences[].text out of a transcript response."""
     texts = []
     for payload in response.get('callTranscripts') or []:
         if not isinstance(payload, dict):
             continue
         for transcript in payload.get("transcript") or []:
+            speaker = transcript.get("speakerId")
+            name = next((party.get('name', 'Unknown Speaker') for party in call.get('parties', []) if party.get('id') == speaker), 'Unknown Speaker')
+
             for sentence in transcript.get("sentences") or []:
                 text = sentence.get("text")
                 if text:
-                    texts.append(text)
+                    texts.append(name + ": " + text)
     return texts
 
 
@@ -138,7 +141,7 @@ def main():
             if not call_id:
                 continue
             response = fetch_transcript(call_id, headers)
-            out.write(format_transcript(call, extract_sentence_texts(response)))
+            out.write(format_transcript(call, extract_sentence_texts(response, call)))
             out.write("\n\n")
 
     print(f"Exported {len(matching)} transcripts to {os.path.abspath(OUTPUT_FILE)}")
