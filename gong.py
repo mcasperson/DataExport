@@ -109,7 +109,7 @@ def extract_sentence_texts(response, call):
             continue
         for transcript in payload.get("transcript") or []:
             speaker = transcript.get("speakerId")
-            name = next((party.get('name', 'Unknown Speaker') for party in call.get('parties', []) if party.get('id') == speaker), 'Unknown Speaker')
+            name = next((party.get('name', 'Unknown Speaker') for party in call.get('parties', []) if party.get('speakerId') == speaker), 'Unknown Speaker')
 
             for sentence in transcript.get("sentences") or []:
                 text = sentence.get("text")
