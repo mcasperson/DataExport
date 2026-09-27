@@ -19,6 +19,7 @@ SF_ACCOUNT_ID = "0015e00000UKtuYAAT"
 CALLS_FILE = "gong_calls.json"
 OUTPUT_FILE = "gong_transcripts.txt"
 TRANSCRIPT_SEPARATOR = "-" * 40
+MAX_PAGES = 200
 
 EXTENSIVE_BODY = {
     "filter": {},
@@ -52,11 +53,10 @@ def post_json(url, body, headers):
 
 
 def fetch_all_calls(headers):
-    """Paginate every page of the extensive endpoint via the returned cursor."""
+    """Paginate up to MAX_PAGES of the extensive endpoint via the returned cursor."""
     calls = []
     cursor = None
-    page = 1
-    while True:
+    for page in range(1, MAX_PAGES + 1):
         print(f"Fetching calls page {page}...")
         body = dict(EXTENSIVE_BODY)
         if cursor:
@@ -66,7 +66,8 @@ def fetch_all_calls(headers):
         cursor = (response.get("records") or {}).get("cursor")
         if not cursor:
             break
-        page += 1
+    if cursor:
+        print(f"Reached maximum of {MAX_PAGES} pages; results truncated.")
     return calls
 
 
@@ -83,12 +84,12 @@ def get_calls(headers):
 
 def matches_account(call):
     """True when a party links a Salesforce Account with the target id."""
-    for party in call.get("parties") or []:
-        for context in party.get("context") or []:
-            if context.get("system") != "Salesforce":
-                continue
-            for obj in context.get("objects") or []:
-                if obj.get("objectType") == "Account" and obj.get("objectId") == SF_ACCOUNT_ID:
+    for context in call.get("context") or []:
+        if context.get("system") != "Salesforce":
+            continue
+        for obj in context.get("objects") or []:
+            if obj.get("objectType") == "Account":
+                if obj.get("objectId") == SF_ACCOUNT_ID:
                     return True
     return False
 
